@@ -1,7 +1,7 @@
 namespace :worker_queue do
   desc 'Load worker items'
   task :load => :environment do
-    WorkerQueue::WorkerQueue.load
+    WorkerQueue.load
   end
 
   desc 'Load worker items and start the worker'
@@ -11,6 +11,6 @@ namespace :worker_queue do
 
   desc 'Start the worker'
   task :work => :environment do
-    WorkerQueue::WorkerQueue.work if WorkerQueue::WorkerQueue.work?
+    WorkerQueue.work if WorkerQueue.work?
   end
 end
