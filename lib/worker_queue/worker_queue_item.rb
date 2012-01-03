@@ -1,3 +1,4 @@
+require 'digest/sha1'
 class WorkerQueue
   class WorkerQueueItem < ActiveRecord::Base
     
@@ -8,33 +9,47 @@ class WorkerQueue
     STATUS_COMPLETED  = 3
     STATUS_SKIPPED    = 4 
 
-    named_scope :waiting,   :conditions => {:status => 0} # STATUS_WAITING
-    named_scope :running,   :conditions => {:status => 1} # STATUS_RUNNING
-    named_scope :errors,    :conditions => {:status => 2} # STATUS_ERROR
-    named_scope :completed, :conditions => {:status => 3} # STATUS_COMPLETED
-    named_scope :skipped,   :conditions => {:status => 4} # STATUS_SKIPPED
-    named_scope :busy,      :conditions => ['status = ? OR status = ?', 1, 2] # STATUS_RUNNING STATUS_ERROR
-    
+    scope :waiting,   where(:status => 0) # STATUS_WAITING
+    scope :running,   where(:status => 1) # STATUS_RUNNING
+    scope :errors,    where(:status => 2) # STATUS_ERROR
+    scope :completed, where(:status => 3) # STATUS_COMPLETED
+    scope :skipped,   where(:status => 4) # STATUS_SKIPPED
+    scope :busy,      where(['status = ? OR status = ?', 1, 2]) # STATUS_RUNNING STATUS_ERROR
+    scope :with_run_at, lambda { |time| where("(run_at is NULL) or (? >= run_at)", time) }
+     
     validate :hash_in_argument_hash  
     serialize :argument_hash, Hash
     
+    ##if no task group...create random one
+
+    def before_create
+      unless self.task_group
+        self.task_group = Digest::SHA1.hexdigest(Time.now.to_f.to_s)
+      end
+    end
+    def self.error_range(first_id,second_id)
+      WorkerQueue::WorkerQueueItem.where("id >= ? and id <= ? and error_message is not NULL", first_id, second_id).each {|item|
+        puts "item : #{item.id} error_message : #{item.error_message}"
+      }
+    end
     # Execute ourselves
     # Note that the task executed expects Class.method(args_hash) to return true or false.
     # Options
     # *<tt>:keep_data</tt> Do not empty the data on completion.
     def execute(options = {})
-      
       ah = argument_hash.clone
       ah.store(:data, data) if data
-
       begin
-        unless class_name.classify.constantize.send(method_name.to_sym, ah)
+        unless Kernel.const_get(class_name.to_sym).send(method_name.to_sym, ah) #class_name.classify.constantize.send(method_name.to_sym, ah)
           self.status = STATUS_ERROR
           self.error_message = "called method returned false"
         end
       rescue Exception => e
+        puts e.message
+        puts e.backtrace.join("\n")
         self.status = STATUS_ERROR
-        self.error_message = "class or method does not exist" + e.to_s
+        self.error_message = "class or method does not exist : " + e.to_s 
+        self.error_backtrace = e.backtrace.join("\n")
       end
       
       # If we have an error, do not run anything in this group (halt the chain)
@@ -85,16 +100,28 @@ class WorkerQueue
     # This prevents us fetching the data field for a simple status lookup
     def self.partial_select_attributes
       (columns.collect{|x| x.name} - ['data']).join(',')
-    end
+  end
 
     # Find tasks with a certain flag uncompleted tasks in the database
     def self.waiting_tasks
-      waiting(:order => 'id', :select => partial_select_attributes)
+      waiting.with_run_at(Time.zone.now).find(:all, :order => 'id', :select => partial_select_attributes)
     end
 
     # Find all tasks being worked on at the moment.
     def self.busy_tasks
       busy(:order => 'id', :select => partial_select_attributes)
+    end
+
+    def self.push(class_name, method_name, task_name, argument_hash={}, skip_on_error=false, run_at=Time.now )
+
+      wq                  = WorkerQueue::WorkerQueueItem.new
+      wq.class_name       = class_name
+      wq.method_name      = method_name
+      wq.task_name        = task_name
+      wq.argument_hash    = argument_hash
+      wq.skip_on_error    = skip_on_error
+      wq.run_at = run_at
+      wq.save!
     end
 
   end

@@ -60,7 +60,7 @@ class WorkerQueue
 
   # Path where worker_queue item loaders are placed
   def self.loaders_lib
-    File.join( RAILS_ROOT, 'lib', 'worker_queue', '' )
+    File.join( Rails.root, 'lib', 'worker_queue', '' )
   end
 
 
