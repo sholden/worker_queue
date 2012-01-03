@@ -5,11 +5,15 @@ require "worker_queue/version"
 Gem::Specification.new do |s|
   s.name        = "worker_queue"
   s.version     = WorkerQueue::VERSION
-  s.authors     = ["Scott Holden"]
+  s.authors     = ["Bart ten Brinke", "Scott Holden"]
   s.email       = ["scott@sshconnection.com"]
   s.homepage    = ""
-  s.summary     = %q{TODO: Write a gem summary}
-  s.description = %q{TODO: Write a gem description}
+  s.summary     = %q{A simple worker queue}
+  s.description = <<-DESC
+As I found other Rails background project to unstable, complex or too memory hogging, I decided to make this.
+WorkerQueue can execute any task, handle large amounts of data, perform tasks on a separate machine and execute
+tasks either in parallel or in sequence. Got Work?
+DESC
 
   s.rubyforge_project = "worker_queue"
 
