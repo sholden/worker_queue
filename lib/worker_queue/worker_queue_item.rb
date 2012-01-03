@@ -9,12 +9,12 @@ module WorkerQueue
     STATUS_COMPLETED  = 3
     STATUS_SKIPPED    = 4 
 
-    scope :waiting,   where(:status => 0) # STATUS_WAITING
-    scope :running,   where(:status => 1) # STATUS_RUNNING
-    scope :errors,    where(:status => 2) # STATUS_ERROR
-    scope :completed, where(:status => 3) # STATUS_COMPLETED
-    scope :skipped,   where(:status => 4) # STATUS_SKIPPED
-    scope :busy,      where(['status = ? OR status = ?', 1, 2]) # STATUS_RUNNING STATUS_ERROR
+    scope :waiting,   lambda { where(:status => 0) } # STATUS_WAITING
+    scope :running,   lambda { where(:status => 1) } # STATUS_RUNNING
+    scope :errors,    lambda { where(:status => 2) } # STATUS_ERROR
+    scope :completed, lambda { where(:status => 3) } # STATUS_COMPLETED
+    scope :skipped,   lambda { where(:status => 4) } # STATUS_SKIPPED
+    scope :busy,      lambda { where(['status = ? OR status = ?', 1, 2]) } # STATUS_RUNNING STATUS_ERROR
     scope :with_run_at, lambda { |time| where("(run_at is NULL) or (? >= run_at)", time) }
      
     validate :hash_in_argument_hash  
