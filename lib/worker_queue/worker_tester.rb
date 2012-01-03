@@ -1,5 +1,5 @@
 # Stub class for specs
-class WorkerQueue
+module WorkerQueue
   class WorkerTester
     def self.test(args = {})
       return true

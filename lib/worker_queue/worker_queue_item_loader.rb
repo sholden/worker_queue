@@ -15,7 +15,7 @@
 # name should be class_name.to_s.underscore + ".rb" (eg. update_session_ticket.rb).
 #
 
-class WorkerQueue
+module WorkerQueue
   class WorkerQueueItemLoader
 
     def self.inherited(subclass)

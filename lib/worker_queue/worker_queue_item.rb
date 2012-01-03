@@ -1,5 +1,5 @@
 require 'digest/sha1'
-class WorkerQueue
+module WorkerQueue
   class WorkerQueueItem < ActiveRecord::Base
     
     # Status messages
