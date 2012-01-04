@@ -1,6 +1,7 @@
 require 'digest/sha1'
 module WorkerQueue
   class WorkerQueueItem < ActiveRecord::Base
+    before_create :assign_task_group
     
     # Status messages
     STATUS_WAITING    = 0
@@ -22,7 +23,7 @@ module WorkerQueue
     
     ##if no task group...create random one
 
-    def before_create
+    def assign_task_group
       unless self.task_group
         self.task_group = Digest::SHA1.hexdigest(Time.now.to_f.to_s)
       end
