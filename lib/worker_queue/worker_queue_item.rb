@@ -15,7 +15,7 @@ module WorkerQueue
     scope :errors,    lambda { where(:status => 2) } # STATUS_ERROR
     scope :completed, lambda { where(:status => 3) } # STATUS_COMPLETED
     scope :skipped,   lambda { where(:status => 4) } # STATUS_SKIPPED
-    scope :busy,      lambda { where(['status = ? OR status = ?', 1, 2]) } # STATUS_RUNNING STATUS_ERROR
+    scope :busy,      lambda { where('status = ? OR status = ?', 1, 2) } # STATUS_RUNNING STATUS_ERROR
     scope :with_run_at, lambda { |time| where("(run_at is NULL) or (? >= run_at)", time) }
      
     validate :hash_in_argument_hash  
@@ -105,12 +105,12 @@ module WorkerQueue
 
     # Find tasks with a certain flag uncompleted tasks in the database
     def self.waiting_tasks
-      waiting.with_run_at(Time.zone.now).find(:all, :order => 'id', :select => partial_select_attributes)
+      waiting.with_run_at(Time.zone.now).order('id').select(partial_select_attributes)
     end
 
     # Find all tasks being worked on at the moment.
     def self.busy_tasks
-      busy(:order => 'id', :select => partial_select_attributes)
+      busy.order('id').select(partial_select_attributes)
     end
 
     def self.push(class_name, method_name, task_name, argument_hash={}, skip_on_error=false, run_at=Time.now )
